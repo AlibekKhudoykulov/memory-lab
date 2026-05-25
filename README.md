@@ -12,9 +12,14 @@ A hands-on Java project demonstrating **memory leaks** caused by obsolete refere
 ## 🏗️ Project Structure
 
 ```
-src/main/java/org/example/
-├── Main.java        # Entry point — runs the leak demonstration
-└── LeakyStack.java  # Custom stack with both leaky and fixed pop methods
+src/main/java/com/lab/
+├── experiment01/
+│   ├── Main.java        # Experiment 1 — obsolete reference leak in a custom stack
+│   └── LeakyStack.java  # Custom stack with both leaky and fixed pop methods
+└── experiment02/
+    ├── Main02.java      # Experiment 2 — unbounded static cache leak
+    ├── User.java        # Simple user entity (10KB each)
+    └── UserCache.java   # Static HashMap cache that never evicts
 ```
 
 ## 🚀 How to Run
@@ -33,11 +38,11 @@ src/main/java/org/example/
 
 2. **Run the application:**
    ```bash
-   mvn exec:java -Dexec.mainClass="org.example.Main"
+   mvn exec:java -Dexec.mainClass="com.lab.experiment01.Main"
    ```
    Or run directly:
    ```bash
-   java -cp target/classes org.example.Main
+   java -cp target/classes com.lab.experiment01.Main
    ```
 
 3. **Attach VisualVM** to the printed PID within 10 seconds.
@@ -74,11 +79,42 @@ Setting the array slot to `null` allows the GC to reclaim the object.
 
 ## 📊 Expected Behavior
 
+### Experiment 1: Obsolete Reference Leak
+
 | Phase | Heap Usage |
 |-------|-----------|
 | Push 1M objects (1KB each) | ~1 GB allocated |
 | Pop all (leaky) | ~1 GB remains — NOT freed |
 | Pop all (fixed) | Drops significantly after GC |
+
+### Experiment 2: Unbounded Static Cache Leak
+
+| Phase | Heap Usage |
+|-------|-----------|
+| Add 50K users (10KB each) to static cache | ~500 MB allocated |
+| Call System.gc() without clearing cache | ~500 MB remains — NOT freed |
+| Call `evictAll()` + GC | Drops back to baseline |
+
+## 🐛 Experiment 2: The Bug
+
+In `UserCache`:
+```java
+private static final Map<Long, User> CACHE = new HashMap<>();
+```
+
+The cache is **static** and **never evicted**. Every user added stays in memory forever, even if the application no longer needs them. This simulates a common real-world leak: caching HTTP session data or database entities without a TTL or eviction policy.
+
+### ✅ The Fix
+
+- Call `UserCache.evictAll()` when cached data is no longer needed
+- In production, use bounded caches with eviction (e.g., Guava `CacheBuilder`, Caffeine, or `WeakHashMap`)
+- Set a max size or TTL (time-to-live) on cache entries
+
+### How to Run Experiment 2
+
+```bash
+java -cp target/classes com.lab.experiment02.Main02
+```
 
 ## 🔑 Key Takeaway
 
@@ -89,4 +125,3 @@ Setting the array slot to `null` allows the GC to reclaim the object.
 ## 📝 License
 
 This project is for educational purposes.
-

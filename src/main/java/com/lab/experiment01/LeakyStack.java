@@ -1,4 +1,4 @@
-package org.example;
+package com.lab.experiment01;
 
 import java.util.Arrays;
 
@@ -42,3 +42,4 @@ public class LeakyStack {
         return size;
     }
 }
+

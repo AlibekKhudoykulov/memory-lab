@@ -1,4 +1,4 @@
-package org.example;
+package com.lab.experiment01;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
@@ -42,3 +42,4 @@ public class Main {
         System.out.println("Stack reference: " + stack.size());
     }
 }
+
